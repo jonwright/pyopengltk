@@ -2,19 +2,16 @@
 from __future__ import print_function
 
 """
-entry point for Tkinter Window with OpenGL
+Demo entry point for Tkinter Window with OpenGL
 """
 
-import sys
+import sys, math, time
 if sys.version_info[0] < 3 :
     from Tkinter import Tk, YES, BOTH
 else:
     from tkinter import Tk, YES, BOTH
-
+from OpenGL import GL, GLU
 from pyopengltk import OpenGLFrame
-import OpenGL.GL as GL
-import OpenGL.GLU as GLU
-import math, time
 
 class AppOgl(OpenGLFrame):
 
@@ -35,7 +32,7 @@ class AppOgl(OpenGLFrame):
         for i in range(npt):
             x = -5.0 + i*10.0/npt 
             y = math.sin(x+ time.time())*5/2
-            GL.glVertex2f(x, y )
+            GL.glVertex2f( x, y )
         GL.glEnd()
         GL.glFlush()
 

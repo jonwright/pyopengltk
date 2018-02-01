@@ -31,8 +31,7 @@ import sys, math, os, logging
 
 _log = logging.getLogger( 'pyopengltk' )
 
-import OpenGL.GL as GL
-import OpenGL.GLU as GLU
+from OpenGL import GL, GLU
 
 if sys.version_info[0] < 3:
     import Tkinter as tk
