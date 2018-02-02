@@ -202,7 +202,7 @@ if sys.platform.startswith( 'linux' ):
             if not visual:
                 _log.error("glXChooseVisual call failed" )
             self.__context = glXCreateContext(self.__window, visual, None, 
-                    GL.G_FALSE)
+                    GL.GL_FALSE)
             glXMakeCurrent(self.__window, self._wid, self.__context)
 
         def tkMakeCurrent( self ):

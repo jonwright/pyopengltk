@@ -82,6 +82,7 @@ class ShaderFrame(pyopengltk.OpenGLFrame):
         GL.glClearColor(0.15, 0.15, 0.15, 1.0)
         GL.glEnable(GL.GL_DEPTH_TEST)
         GL.glEnable(GL.GL_PROGRAM_POINT_SIZE)
+	print(GL.glGetString(GL.GL_VERSION))
         if not hasattr(self, "shader"):
             self.shader = OpenGL.GL.shaders.compileProgram(
                 OpenGL.GL.shaders.compileShader(vertex_shader, GL.GL_VERTEX_SHADER),
