@@ -41,4 +41,5 @@ if __name__ == '__main__':
     app = AppOgl(root, width=320, height=200)
     app.pack(fill=BOTH, expand=YES)
     app.animate=10
+    app.after(100, app.printContext)
     app.mainloop()

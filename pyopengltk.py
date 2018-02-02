@@ -172,9 +172,7 @@ if sys.platform.startswith( 'win32' ):
 if sys.platform.startswith( 'linux' ):
 
     from ctypes import c_int, c_char_p, c_void_p, cdll, POINTER
-    from OpenGL.GLX import GLX_RGBA, GLX_DOUBLEBUFFER, GLX_RED_SIZE, \
-        GLX_BLUE_SIZE, GLX_GREEN_SIZE, GLX_DEPTH_SIZE, glXChooseVisual, \
-        glXMakeCurrent, glXCreateContext, glXSwapBuffers
+    from OpenGL import GLX
     from OpenGL.raw._GLX import Display
 
     _x11lib = cdll.LoadLibrary('libX11.so' )
@@ -184,12 +182,12 @@ if sys.platform.startswith( 'linux' ):
 
     Colormap = c_void_p
     
-    att = [     GLX_RGBA, GLX_DOUBLEBUFFER,
-                GLX_RED_SIZE, 4,
-                GLX_GREEN_SIZE, 4,
-                GLX_BLUE_SIZE, 4,
-                GLX_DEPTH_SIZE, 16,
-                GL.GLint(0),
+    att = [     GLX.GLX_RGBA, GLX.GLX_DOUBLEBUFFER,
+                GLX.GLX_RED_SIZE, 4,
+                GLX.GLX_GREEN_SIZE, 4,
+                GLX.GLX_BLUE_SIZE, 4,
+                GLX.GLX_DEPTH_SIZE, 16,
+                0,
             ]
 
     # Inherits the base and fills in the 3 platform dependent functions
@@ -197,21 +195,26 @@ if sys.platform.startswith( 'linux' ):
 
         def tkCreateContext( self ):
             self.__window = XOpenDisplay( os.environ.get("DISPLAY") )
-            visual = glXChooseVisual( self.__window, 0, 
+            major = c_int(0)
+            minor = c_int(0)
+            GLX.glXQueryVersion( self.__window, major, minor )
+            print("GLX version:",major,minor)
+            visual = GLX.glXChooseVisual( self.__window, 0, 
                     (GL.GLint * len(att))(* att) )
             if not visual:
                 _log.error("glXChooseVisual call failed" )
-            self.__context = glXCreateContext(self.__window, visual, None, 
-                    GL.GL_FALSE)
-            glXMakeCurrent(self.__window, self._wid, self.__context)
+            self.__context = GLX.glXCreateContext(self.__window, visual,
+                                                  None,
+                                                  GL.GL_TRUE)
+            GLX.glXMakeCurrent(self.__window, self._wid, self.__context)
 
         def tkMakeCurrent( self ):
             if self.winfo_ismapped():
-                glXMakeCurrent(self.__window, self._wid, self.__context)
+                GLX.glXMakeCurrent(self.__window, self._wid, self.__context)
 
         def tkSwapBuffers( self ):
             if self.winfo_ismapped():
-                glXSwapBuffers( self.__window, self._wid)
+                GLX.glXSwapBuffers( self.__window, self._wid)
 
 # Linux/X11 specific code ends  
 ###############################################################################

@@ -15,20 +15,20 @@ else:
     import Tkinter as tk
 
 vertex_shader = """
-#version 330
+#version 130 
 in vec3 position;
 varying vec3 vertex_color;
 uniform mat3 proj;
 void main()
 {
-   gl_Position = vec4( proj*position, 1.0f);
-   gl_PointSize = 4.f/(0.5f + length( position ));
+   gl_Position = vec4( proj*position, 1.0);
+   gl_PointSize = 4./(0.5 + length( position ));
    vertex_color = vec3( position.x/2+.5, position.y/2+.5, position.z/2+.5);
 }
 """
 
 fragment_shader = """
-#version 330
+#version 130
 varying vec3 vertex_color;
 void main()
 {
@@ -82,7 +82,8 @@ class ShaderFrame(pyopengltk.OpenGLFrame):
         GL.glClearColor(0.15, 0.15, 0.15, 1.0)
         GL.glEnable(GL.GL_DEPTH_TEST)
         GL.glEnable(GL.GL_PROGRAM_POINT_SIZE)
-	print(GL.glGetString(GL.GL_VERSION))
+	print("GL_VERSION:",GL.glGetString(GL.GL_VERSION))
+        print("GLSL_VERSION",GL.glGetString(GL.GL_SHADING_LANGUAGE_VERSION))
         if not hasattr(self, "shader"):
             self.shader = OpenGL.GL.shaders.compileProgram(
                 OpenGL.GL.shaders.compileShader(vertex_shader, GL.GL_VERTEX_SHADER),
