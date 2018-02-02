@@ -35,7 +35,7 @@ from OpenGL import GL, GLU
 
 if sys.version_info[0] < 3:
     import Tkinter as tk
-    from Tkinter import Dialog as dialog
+    import Dialog as dialog
 else:
     import tkinter as tk
     from tkinter import dialog as dialog
@@ -53,12 +53,12 @@ class baseOpenGLFrame(tk.Frame):
         self.bind('<Configure>', self.tkResize )
         self.bind('<Expose>', self.tkExpose )
         self.animate = 0
+        self.cb = None
 
     def tkMap( self, evt ):
         """" Called when frame goes onto the screen """
         self._wid = self.winfo_id()
         self.tkCreateContext( )
-        # self.printContext()
         self.initgl()
 
     def printContext(self):
@@ -82,6 +82,8 @@ class baseOpenGLFrame(tk.Frame):
         raise NotImplementedError
 
     def tkExpose( self, evt):
+        if self.cb:
+            self.after_cancel(self.cb)
         self._display()
 
     def tkResize( self, evt ):
@@ -109,8 +111,8 @@ class baseOpenGLFrame(tk.Frame):
         self.redraw()
         self.tkSwapBuffers( )
         if self.animate > 0:
-            self.after( self.animate, self._display )
-
+            self.cb = self.after(self.animate, self._display )
+        
     def initgl(self): 
         # For the user code
         raise NotImplementedError
