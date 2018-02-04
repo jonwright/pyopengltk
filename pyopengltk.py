@@ -171,11 +171,11 @@ if sys.platform.startswith( 'win32' ):
 
 if sys.platform.startswith( 'linux' ):
 
-    from ctypes import c_int, c_char_p, c_void_p, cdll, POINTER
+    from ctypes import c_int, c_char_p, c_void_p, cdll, POINTER, util
     from OpenGL import GLX
     from OpenGL.raw._GLX import Display
-
-    _x11lib = cdll.LoadLibrary('libX11.so' )
+    
+    _x11lib = cdll.LoadLibrary(util.find_library( "X11" ) )
     XOpenDisplay = _x11lib.XOpenDisplay
     XOpenDisplay.argtypes = [c_char_p]
     XOpenDisplay.restype = POINTER(Display) 
@@ -206,6 +206,8 @@ if sys.platform.startswith( 'linux' ):
             self.__context = GLX.glXCreateContext(self.__window, visual,
                                                   None,
                                                   GL.GL_TRUE)
+            # This generally gets a 3.0 version even if the setup is newer
+            # ... needs ARB stuff ?
             GLX.glXMakeCurrent(self.__window, self._wid, self.__context)
 
         def tkMakeCurrent( self ):
