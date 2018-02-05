@@ -81,7 +81,8 @@ class baseOpenGLFrame(tk.Frame):
             print(" GL_CONTEXT_COMPATIBILITY_PROFILE_BIT :",
                    bool( msk & GL.GL_CONTEXT_COMPATIBILITY_PROFILE_BIT) )
         except:
-            raise
+            print("Old context errors arose")
+            # raise
 
     def tkCreateContext( self ):
         # Platform dependent part
@@ -192,7 +193,7 @@ if sys.platform.startswith( 'linux' ):
     _x11lib = cdll.LoadLibrary(util.find_library( "X11" ) )
     XOpenDisplay = _x11lib.XOpenDisplay
     XOpenDisplay.argtypes = [c_char_p]
-    XOpenDisplay.restype = POINTER(Display) 
+    XOpenDisplay.restype = POINTER(Display)
 
     Colormap = c_void_p
     
@@ -203,6 +204,20 @@ if sys.platform.startswith( 'linux' ):
                 GLX.GLX_DEPTH_SIZE, 16,
                 0,
             ]
+    fbatt = [     GLX.GLX_X_RENDERABLE     , 1,
+                  GLX.GLX_DRAWABLE_TYPE    , GLX.GLX_WINDOW_BIT,
+                  GLX.GLX_RENDER_TYPE      , GLX.GLX_RGBA_BIT,
+                  GLX.GLX_RED_SIZE         , 4,
+                  GLX.GLX_GREEN_SIZE       , 4,
+                  GLX.GLX_BLUE_SIZE        , 4,
+#                  GLX.GLX_ALPHA_SIZE       , 4,
+                  GLX.GLX_DEPTH_SIZE       , 16,
+                  GLX.GLX_DOUBLEBUFFER     , 1,
+ #                 GLX.GLX_STENCIL_SIZE     , 8,
+      #            GLX.GLX_X_VISUAL_TYPE    , GLX.GLX_TRUE_COLOR,
+               #   GLX.GLX_CONFIG_CAVEAT    , GLX.GLX_NONE,
+                  0,
+            ]
 
     # Inherits the base and fills in the 3 platform dependent functions
     class OpenGLFrame( baseOpenGLFrame ):
@@ -212,17 +227,58 @@ if sys.platform.startswith( 'linux' ):
             major = c_int(0)
             minor = c_int(0)
             GLX.glXQueryVersion( self.__window, major, minor )
-            print("GLX version:",major,minor)
+            print("GLX version:",major.value,minor.value)
             visual = GLX.glXChooseVisual( self.__window, 0, 
-                    (GL.GLint * len(att))(* att) )
+                                          (GL.GLint * len(att))(* att) )
             if not visual:
                 _log.error("glXChooseVisual call failed" )
-            self.__context = GLX.glXCreateContext(self.__window, visual,
-                                                  None,
-                                                  GL.GL_TRUE)
-            # This generally gets a 3.0 version even if the setup is newer
-            # ... needs ARB stuff ?
-            GLX.glXMakeCurrent(self.__window, self._wid, self.__context)
+            if major.value == 1 and minor.value < 3: # e.g. 1.2 and down
+                print( visual.contents.visualid )
+                self.__context = GLX.glXCreateContext(self.__window,
+                                                      visual,
+                                                      None,
+                                                      GL.GL_TRUE)
+            else:
+                ncfg  = GL.GLint(0)
+                XDefaultScreen = _x11lib.XDefaultScreen
+                XDefaultScreen.argtypes = [POINTER(Display)]
+                XOpenDisplay.restype = c_int
+                screen = XDefaultScreen( self.__window )
+                print("Screen is ",screen)
+                cfgs = GLX.glXChooseFBConfig( self.__window,
+                                             screen,
+                                             (GL.GLint * len(fbatt))(* fbatt),
+                                             ncfg )
+                print( "Number of configs",ncfg.value )
+                print(visual.contents.visualid)
+                best = -1
+                for i in range(ncfg.value):
+                    vis = GLX.glXGetVisualFromFBConfig(self.__window,  cfgs[i])
+#                    print("i %d visualid %d:" %(i,vis.contents.visualid))
+                    if visual.contents.visualid == vis.contents.visualid:
+                        best = i
+                if best >= 0:
+                    print("Got a matching visual?",best )
+                else:
+                    print("OH dear - visual does not match?" )
+                    best=0
+                typ = GLX.GLX_RGBA_TYPE #
+                
+                self.__context = GLX.glXCreateNewContext(self.__window,
+                                                         cfgs[best],
+                                                         typ,
+                                                         None, # share list
+                                                         GL.GL_TRUE) # direct
+                if not self.__context:
+                    print("Failed to create context")
+                print("Is Direct?: ", GLX.glXIsDirect( self.__window, self.__context ))
+#                print("wid: ",self._wid)
+#                self._wid = GLX.glXCreateWindow( self.__window, cfgs[best], self._wid, None)
+#                print("wid: ",self._wid)
+                GLX.glXMakeContextCurrent( self.__window, self._wid, self._wid,
+                                           self.__context )
+                print("Done making context")
+                
 
         def tkMakeCurrent( self ):
             if self.winfo_ismapped():
