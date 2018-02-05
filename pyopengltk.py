@@ -187,7 +187,7 @@ if sys.platform.startswith( 'win32' ):
 if sys.platform.startswith( 'linux' ):
 
     from ctypes import c_int, c_char_p, c_void_p, cdll, POINTER, util, \
-        pointer
+        pointer, CFUNCTYPE, c_bool
     from OpenGL import GLX
     from OpenGL.raw._GLX import Display
     import tk_read_XWindowAttributes
@@ -229,7 +229,7 @@ if sys.platform.startswith( 'linux' ):
             major = c_int(0)
             minor = c_int(0)
             GLX.glXQueryVersion( self.__window, major, minor )
-            print("GLX version:",major.value,minor.value)
+            print("GLX version: %d.%d"%(major.value,minor.value))
             if major.value == 1 and minor.value < 3: # e.g. 1.2 and down
                 visual = GLX.glXChooseVisual( self.__window, 0, 
                                               (GL.GLint * len(att))(* att) )
@@ -252,7 +252,6 @@ if sys.platform.startswith( 'linux' ):
                                              ncfg )
                 print( "Number of configs",ncfg.value )
                 xwa = tk_read_XWindowAttributes.getXWA(self._wid)
-                                
                 print("xwa....id" ,xwa.visual.contents.visualid)
                 ideal = xwa.visual.contents.visualid
                 best = -1
@@ -266,13 +265,44 @@ if sys.platform.startswith( 'linux' ):
                 else:
                     print("OH dear - visual does not match?" )
                     best=0
-                typ = GLX.GLX_RGBA_TYPE #
-                
-                self.__context = GLX.glXCreateNewContext(self.__window,
-                                                         cfgs[best],
-                                                         typ,
-                                                         None, # share list
-                                                         GL.GL_TRUE) # direct
+                extensions = GLX.glXQueryExtensionsString(self.__window, screen)
+                if "GLX_ARB_create_context" not in extensions or True: # FIXME HERE old style then:
+                    typ = GLX.GLX_RGBA_TYPE #
+                    self.__context = GLX.glXCreateNewContext(self.__window,
+                                                             cfgs[best],
+                                                             typ,
+                                                             None, # share list
+                                                             GL.GL_TRUE) # direct
+                else:
+                    s =  "glXCreateContextAttribsARB"
+                    # FAILING HERE
+                    p = GLX.glXGetProcAddress( c_char_p( s ) )
+                    
+                    print(p)
+                    if not p:
+                        p = GLX.glXGetProcAddressARB( ( GL.GLubyte * len(s)).from_buffer_copy(s) )
+                    print(p)
+                    if p:
+                        print(" p is true")
+                    p.restype = GLX.GLXContext
+                    p.argtypes = [POINTER(Display),
+                                  GLX.GLXFBConfig,
+                                  GLX.GLXContext,
+                                  c_bool,
+                                  POINTER(c_int)]
+                    arb_attrs =   fbatt[:-1] + [ ]
+
+                    #    GLX.GLX_CONTEXT_MAJOR_VERSION_ARB , 3  
+                    #    GLX.GLX_CONTEXT_MINOR_VERSION_ARB , 1,
+                    #    0 ]
+                    #
+                    #    GLX.GLX_CONTEXT_FLAGS_ARB
+                    #    GLX.GLX_CONTEXT_PROFILE_MASK_ARB
+                    #]
+#                    import pdb
+#                    pdb.set_trace()
+                    self.__context = p( self.__window, cfgs[best], None, GL.GL_TRUE,
+                                        (GL.GLint * len(arb_attrs))(* arb_attrs) )
                 if not self.__context:
                     print("Failed to create context")
                 print("Is Direct?: ", GLX.glXIsDirect( self.__window, self.__context ))
