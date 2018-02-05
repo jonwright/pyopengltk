@@ -82,7 +82,7 @@ class baseOpenGLFrame(tk.Frame):
                    bool( msk & GL.GL_CONTEXT_COMPATIBILITY_PROFILE_BIT) )
         except:
             print("Old context errors arose")
-            # raise
+            raise
 
     def tkCreateContext( self ):
         # Platform dependent part
@@ -186,9 +186,11 @@ if sys.platform.startswith( 'win32' ):
 
 if sys.platform.startswith( 'linux' ):
 
-    from ctypes import c_int, c_char_p, c_void_p, cdll, POINTER, util
+    from ctypes import c_int, c_char_p, c_void_p, cdll, POINTER, util, \
+        pointer
     from OpenGL import GLX
     from OpenGL.raw._GLX import Display
+    import tk_read_XWindowAttributes
     
     _x11lib = cdll.LoadLibrary(util.find_library( "X11" ) )
     XOpenDisplay = _x11lib.XOpenDisplay
@@ -228,12 +230,11 @@ if sys.platform.startswith( 'linux' ):
             minor = c_int(0)
             GLX.glXQueryVersion( self.__window, major, minor )
             print("GLX version:",major.value,minor.value)
-            visual = GLX.glXChooseVisual( self.__window, 0, 
-                                          (GL.GLint * len(att))(* att) )
-            if not visual:
-                _log.error("glXChooseVisual call failed" )
             if major.value == 1 and minor.value < 3: # e.g. 1.2 and down
-                print( visual.contents.visualid )
+                visual = GLX.glXChooseVisual( self.__window, 0, 
+                                              (GL.GLint * len(att))(* att) )
+                if not visual:
+                    _log.error("glXChooseVisual call failed" )
                 self.__context = GLX.glXCreateContext(self.__window,
                                                       visual,
                                                       None,
@@ -242,7 +243,7 @@ if sys.platform.startswith( 'linux' ):
                 ncfg  = GL.GLint(0)
                 XDefaultScreen = _x11lib.XDefaultScreen
                 XDefaultScreen.argtypes = [POINTER(Display)]
-                XOpenDisplay.restype = c_int
+                XDefaultScreen.restype = c_int
                 screen = XDefaultScreen( self.__window )
                 print("Screen is ",screen)
                 cfgs = GLX.glXChooseFBConfig( self.__window,
@@ -250,12 +251,15 @@ if sys.platform.startswith( 'linux' ):
                                              (GL.GLint * len(fbatt))(* fbatt),
                                              ncfg )
                 print( "Number of configs",ncfg.value )
-                print(visual.contents.visualid)
+                xwa = tk_read_XWindowAttributes.getXWA(self._wid)
+                                
+                print("xwa....id" ,xwa.visual.contents.visualid)
+                ideal = xwa.visual.contents.visualid
                 best = -1
                 for i in range(ncfg.value):
                     vis = GLX.glXGetVisualFromFBConfig(self.__window,  cfgs[i])
 #                    print("i %d visualid %d:" %(i,vis.contents.visualid))
-                    if visual.contents.visualid == vis.contents.visualid:
+                    if ideal == vis.contents.visualid:
                         best = i
                 if best >= 0:
                     print("Got a matching visual?",best )
