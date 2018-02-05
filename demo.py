@@ -23,6 +23,8 @@ class AppOgl(OpenGLFrame):
         GL.glMatrixMode(GL.GL_PROJECTION)
         GL.glLoadIdentity()
         GLU.gluOrtho2D(-5,5,-5,5)
+        self.start = time.time()
+        self.nframes = 0
     
 
     def redraw(self):
@@ -35,11 +37,14 @@ class AppOgl(OpenGLFrame):
             GL.glVertex2f( x, y )
         GL.glEnd()
         GL.glFlush()
+        self.nframes+=1
+        tm = time.time() - self.start
+        print("fps",self.nframes / tm, end="\r" )
 
 if __name__ == '__main__':
     root = Tk()
     app = AppOgl(root, width=320, height=200)
     app.pack(fill=BOTH, expand=YES)
-    app.animate=10
+    app.animate=1
     app.after(100, app.printContext)
     app.mainloop()

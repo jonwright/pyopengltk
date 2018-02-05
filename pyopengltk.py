@@ -63,11 +63,25 @@ class baseOpenGLFrame(tk.Frame):
 
     def printContext(self):
         """ For debugging """
-        print( GL.glGetString(GL.GL_VENDOR),
-               GL.glGetString(GL.GL_RENDERER),
-               GL.glGetString(GL.GL_VERSION) )
+        print("Extension list:")
         exts = GL.glGetString(GL.GL_EXTENSIONS)
-        print( exts )
+        for e in sorted(exts.split()):
+            print(  "\t", e )
+        print( "GL_VENDOR  :",GL.glGetString(GL.GL_VENDOR))
+        print( "GL_RENDERER:",GL.glGetString(GL.GL_RENDERER))
+        print( "GL_VERSION :",GL.glGetString(GL.GL_VERSION))
+        try:
+            print(" GL_MAJOR_VERSION:", GL.glGetIntegerv( GL.GL_MAJOR_VERSION ))
+            print(" GL_MINOR_VERSION:", GL.glGetIntegerv( GL.GL_MINOR_VERSION ))
+            print(" GL_SHADING_LANGUAGE_VERSION :", 
+                    GL.glGetString(GL.GL_SHADING_LANGUAGE_VERSION))
+            msk = GL.glGetIntegerv(GL.GL_CONTEXT_PROFILE_MASK)
+            print(" GL_CONTEXT_CORE_PROFILE_BIT :",
+                   bool( msk & GL.GL_CONTEXT_CORE_PROFILE_BIT) )
+            print(" GL_CONTEXT_COMPATIBILITY_PROFILE_BIT :",
+                   bool( msk & GL.GL_CONTEXT_COMPATIBILITY_PROFILE_BIT) )
+        except:
+            raise
 
     def tkCreateContext( self ):
         # Platform dependent part

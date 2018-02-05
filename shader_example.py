@@ -82,8 +82,6 @@ class ShaderFrame(pyopengltk.OpenGLFrame):
         GL.glClearColor(0.15, 0.15, 0.15, 1.0)
         GL.glEnable(GL.GL_DEPTH_TEST)
         GL.glEnable(GL.GL_PROGRAM_POINT_SIZE)
-	print("GL_VERSION:",GL.glGetString(GL.GL_VERSION))
-        print("GLSL_VERSION",GL.glGetString(GL.GL_SHADING_LANGUAGE_VERSION))
         if not hasattr(self, "shader"):
             self.shader = OpenGL.GL.shaders.compileProgram(
                 OpenGL.GL.shaders.compileShader(vertex_shader, GL.GL_VERTEX_SHADER),
@@ -92,6 +90,7 @@ class ShaderFrame(pyopengltk.OpenGLFrame):
             self.vertex_array_object = create_object(self.shader)
             self.proj = GL.glGetUniformLocation( self.shader, 'proj')
         self.nframes = 0
+        self.start = time.time()
 
     def redraw(self):
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
@@ -105,7 +104,7 @@ class ShaderFrame(pyopengltk.OpenGLFrame):
         GL.glBindVertexArray( 0 )
         GL.glUseProgram( 0 )
         GL.glRasterPos2f(-0.99,-0.99);
-        if self.nframes > 0:
+        if self.nframes > 1:
             t = time.time()-self.start
             fps = "fps: %5.2f frames: %d"%(self.nframes / t, self.nframes)
             for c in fps:
@@ -116,9 +115,10 @@ class ShaderFrame(pyopengltk.OpenGLFrame):
 def main():
     root = tk.Tk()
     app = ShaderFrame(root, width=512,height=512)
-    app.start = time.time()
     app.pack(fill=tk.BOTH, expand=tk.YES)
+    app.after(100, app.printContext)
     app.animate=1000//60
+    app.animate=1
     app.mainloop()
 if __name__ == '__main__':
     main()
