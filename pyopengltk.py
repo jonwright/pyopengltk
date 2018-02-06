@@ -223,7 +223,7 @@ if sys.platform.startswith( 'linux' ):
     class OpenGLFrame( baseOpenGLFrame ):
 
         def tkCreateContext( self ):
-            self.__window = XOpenDisplay( os.environ.get("DISPLAY") )
+            self.__window = XOpenDisplay( self.winfo_screen().encode('utf-8'))
             # Check glx version:
             major = c_int(0)
             minor = c_int(0)

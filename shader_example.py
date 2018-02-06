@@ -14,8 +14,43 @@ if sys.version_info[0] > 2:
 else:
     import Tkinter as tk
 
-vertex_shader = """
-#version 130 
+#
+# Avoiding glitches in pyopengl-3.0.x and python3.4
+def bytestr(s):
+    return s.encode("utf-8")+b"\000" 
+#
+# Avoiding glitches in pyopengl-3.0.x and python3.4
+def compileShader( source, shaderType ):
+    """
+    Compile shader source of given type
+        source -- GLSL source-code for the shader
+    shaderType -- GLenum GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, etc,
+        returns GLuint compiled shader reference
+    raises RuntimeError when a compilation failure occurs
+    """
+    if isinstance(source, str):
+        source = [source]
+    elif isinstance(source, bytes):
+        source = [source.decode('utf-8')]
+
+    shader = GL.glCreateShader(shaderType)
+    GL.glShaderSource(shader, source)
+    GL.glCompileShader(shader)
+    result = GL.glGetShaderiv(shader, GL.GL_COMPILE_STATUS)
+    if not(result):
+        # TODO: this will be wrong if the user has
+        # disabled traditional unpacking array support.
+        raise RuntimeError(
+            """Shader compile failure (%s): %s"""%(
+                result,
+                GL.glGetShaderInfoLog( shader ),
+            ),
+            source,
+            shaderType,
+        )
+    return shader    
+    
+vertex_shader = """#version 130 
 in vec3 position;
 varying vec3 vertex_color;
 uniform mat3 proj;
@@ -27,8 +62,7 @@ void main()
 }
 """
 
-fragment_shader = """
-#version 130
+fragment_shader = """#version 130
 varying vec3 vertex_color;
 void main()
 {
@@ -48,7 +82,7 @@ def create_object(shader):
     vertex_buffer = GL.glGenBuffers(1)
     GL.glBindBuffer(GL.GL_ARRAY_BUFFER, vertex_buffer)
     # Get the position of the 'position' in parameter of our shader and bind it.
-    position = GL.glGetAttribLocation(shader, 'position')
+    position = GL.glGetAttribLocation(shader, bytestr('position') )
     GL.glEnableVertexAttribArray(position)
     # Describe the position data layout in the buffer
     GL.glVertexAttribPointer(position, 3, GL.GL_FLOAT, False, 0, ctypes.c_void_p(0))
@@ -78,17 +112,17 @@ def rot(a,b,c):
 class ShaderFrame(pyopengltk.OpenGLFrame):
 
     def initgl(self):
-        GLUT.glutInit()
+        GLUT.glutInit(sys.argv)
         GL.glClearColor(0.15, 0.15, 0.15, 1.0)
         GL.glEnable(GL.GL_DEPTH_TEST)
         GL.glEnable(GL.GL_PROGRAM_POINT_SIZE)
         if not hasattr(self, "shader"):
             self.shader = OpenGL.GL.shaders.compileProgram(
-                OpenGL.GL.shaders.compileShader(vertex_shader, GL.GL_VERTEX_SHADER),
-                OpenGL.GL.shaders.compileShader(fragment_shader, GL.GL_FRAGMENT_SHADER)
+                compileShader(vertex_shader, GL.GL_VERTEX_SHADER),
+                compileShader(fragment_shader, GL.GL_FRAGMENT_SHADER)
                 )
             self.vertex_array_object = create_object(self.shader)
-            self.proj = GL.glGetUniformLocation( self.shader, 'proj')
+            self.proj = GL.glGetUniformLocation( self.shader, bytestr('proj'))
         self.nframes = 0
         self.start = time.time()
 
