@@ -61,12 +61,15 @@ class baseOpenGLFrame(tk.Frame):
         self.tkCreateContext( )
         self.initgl()
 
-    def printContext(self):
+    def printContext(self, extns=False):
         """ For debugging """
-        print("Extension list:")
         exts = GL.glGetString(GL.GL_EXTENSIONS)
-        for e in sorted(exts.split()):
-            print(  "\t", e )
+        if extns:
+            print("Extension list:")        
+            for e in sorted(exts.split()):
+                print(  "\t", e )
+        else:
+            print("Number of extensions:",len(exts.split()))
         print( "GL_VENDOR  :",GL.glGetString(GL.GL_VENDOR))
         print( "GL_RENDERER:",GL.glGetString(GL.GL_RENDERER))
         print( "GL_VERSION :",GL.glGetString(GL.GL_VERSION))
@@ -190,34 +193,29 @@ if sys.platform.startswith( 'linux' ):
         pointer, CFUNCTYPE, c_bool
     from OpenGL import GLX
     from OpenGL.raw._GLX import Display
-#    import tk_read_XWindowAttributes
     
     _x11lib = cdll.LoadLibrary(util.find_library( "X11" ) )
     XOpenDisplay = _x11lib.XOpenDisplay
     XOpenDisplay.argtypes = [c_char_p]
     XOpenDisplay.restype = POINTER(Display)
-
-    Colormap = c_void_p
     
+    Colormap = c_void_p
+    # Attributes for old style creation
     att = [     GLX.GLX_RGBA, GLX.GLX_DOUBLEBUFFER,
-                GLX.GLX_RED_SIZE, 4,
+                GLX.GLX_RED_SIZE,   4,
                 GLX.GLX_GREEN_SIZE, 4,
-                GLX.GLX_BLUE_SIZE, 4,
+                GLX.GLX_BLUE_SIZE,  4,
                 GLX.GLX_DEPTH_SIZE, 16,
                 0,
             ]
+    # Attributes for newer style creations
     fbatt = [     GLX.GLX_X_RENDERABLE     , 1,
                   GLX.GLX_DRAWABLE_TYPE    , GLX.GLX_WINDOW_BIT,
                   GLX.GLX_RENDER_TYPE      , GLX.GLX_RGBA_BIT,
-                  GLX.GLX_RED_SIZE         , 4,
-                  GLX.GLX_GREEN_SIZE       , 4,
-                  GLX.GLX_BLUE_SIZE        , 4,
-#                  GLX.GLX_ALPHA_SIZE       , 4,
-                  GLX.GLX_DEPTH_SIZE       , 16,
+                  GLX.GLX_RED_SIZE         , 1,
+                  GLX.GLX_GREEN_SIZE       , 1,
+                  GLX.GLX_BLUE_SIZE        , 1,
                   GLX.GLX_DOUBLEBUFFER     , 1,
- #                 GLX.GLX_STENCIL_SIZE     , 8,
-      #            GLX.GLX_X_VISUAL_TYPE    , GLX.GLX_TRUE_COLOR,
-               #   GLX.GLX_CONFIG_CAVEAT    , GLX.GLX_NONE,
                   0,
             ]
 
@@ -226,6 +224,7 @@ if sys.platform.startswith( 'linux' ):
 
         def tkCreateContext( self ):
             self.__window = XOpenDisplay( os.environ.get("DISPLAY") )
+            # Check glx version:
             major = c_int(0)
             minor = c_int(0)
             GLX.glXQueryVersion( self.__window, major, minor )
@@ -239,44 +238,61 @@ if sys.platform.startswith( 'linux' ):
                                                       visual,
                                                       None,
                                                       GL.GL_TRUE)
+                GLX.glXMakeCurrent(self.__window, self._wid, self.__context)
+                return # OUT HERE FOR 1.2 and less
             else:
-                ncfg  = GL.GLint(0)
+                # 1.3 or higher
+                # which screen - should it be winfo_screen instead ??
                 XDefaultScreen = _x11lib.XDefaultScreen
                 XDefaultScreen.argtypes = [POINTER(Display)]
                 XDefaultScreen.restype = c_int
                 screen = XDefaultScreen( self.__window )
                 print("Screen is ",screen)
+                # Look at framebuffer configs 
+                ncfg  = GL.GLint(0)
                 cfgs = GLX.glXChooseFBConfig( self.__window,
                                              screen,
                                              (GL.GLint * len(fbatt))(* fbatt),
                                              ncfg )
-                print( "Number of configs",ncfg.value )
-                # xwa = tk_read_XWindowAttributes.getXWA(self._wid)
-                # print("xwa....id" ,xwa.visual.contents.visualid)
-                # ideal = xwa.visual.contents.visualid
-                ideal = self.winfo_visualid()
+                print( "Number of FBconfigs",ncfg.value )
+                #
+                # Try to match to the current window
+                # ... might also be possible to set this for the frame
+                # ... but for now we just take what Tk gave us
+                ideal = int(self.winfo_visualid(), 16) # convert from hex
                 best = -1
                 for i in range(ncfg.value):
                     vis = GLX.glXGetVisualFromFBConfig(self.__window,  cfgs[i])
-#                    print("i %d visualid %d:" %(i,vis.contents.visualid))
                     if ideal == vis.contents.visualid:
                         best = i
+                # print(type(vis.contents.visualid))
                 if best >= 0:
-                    print("Got a matching visual?",best )
+                    print("Got a matching visual: index %d xid %s"%(best,hex(ideal) ))
                 else:
-                    print("OH dear - visual does not match?" )
+                    print("oh dear - visual does not match" )
+                    # Take the first in the list (should be another I guess)
                     best=0
+                # Here we insist on RGBA - but didn't check earlier
+                self.__context = GLX.glXCreateNewContext(self.__window,
+                                                         cfgs[best],
+                                                         GLX.GLX_RGBA_TYPE,
+                                                         None, # share list
+                                                         GL.GL_TRUE) # direct
+                print("Is Direct?: ", GLX.glXIsDirect( self.__window, self.__context ))
+                # Not creating another window ... some tutorials do
+#                print("wid: ",self._wid)
+#                self._wid = GLX.glXCreateWindow( self.__window, cfgs[best], self._wid, None)
+#                print("wid: ",self._wid)
+                GLX.glXMakeContextCurrent( self.__window, self._wid, self._wid,
+                                           self.__context )
+                print("Done making a first context")
                 extensions = GLX.glXQueryExtensionsString(self.__window, screen)
-                if "GLX_ARB_create_context" not in extensions or True: # FIXME HERE old style then:
-                    typ = GLX.GLX_RGBA_TYPE #
-                    self.__context = GLX.glXCreateNewContext(self.__window,
-                                                             cfgs[best],
-                                                             typ,
-                                                             None, # share list
-                                                             GL.GL_TRUE) # direct
-                else:
+                # Here we quit - getting a modern context needs further work below
+                return
+                if "GLX_ARB_create_context" in extensions:
+                    # We can try to upgrade it ??
+                    print("Trying to upgrade context")
                     s =  "glXCreateContextAttribsARB"
-                    # FAILING HERE
                     p = GLX.glXGetProcAddress( c_char_p( s ) )
                     
                     print(p)
@@ -304,15 +320,6 @@ if sys.platform.startswith( 'linux' ):
 #                    pdb.set_trace()
                     self.__context = p( self.__window, cfgs[best], None, GL.GL_TRUE,
                                         (GL.GLint * len(arb_attrs))(* arb_attrs) )
-                if not self.__context:
-                    print("Failed to create context")
-                print("Is Direct?: ", GLX.glXIsDirect( self.__window, self.__context ))
-#                print("wid: ",self._wid)
-#                self._wid = GLX.glXCreateWindow( self.__window, cfgs[best], self._wid, None)
-#                print("wid: ",self._wid)
-                GLX.glXMakeContextCurrent( self.__window, self._wid, self._wid,
-                                           self.__context )
-                print("Done making context")
                 
 
         def tkMakeCurrent( self ):
@@ -628,11 +635,11 @@ class Opengl(RawOpengl):
         # Scale mouse translations to object viewplane so object tracks with mouse
 
         win_height = max( 1,self.winfo_height() )
-        obj_c	  = ( self.xcenter, self.ycenter, self.zcenter )
-        win		= GLU.gluProject( obj_c[0], obj_c[1], obj_c[2])
-        obj		= GLU.gluUnProject( win[0], win[1] + 0.5 * win_height, win[2])
-        dist	   = math.sqrt( v3distsq( obj, obj_c ) )
-        scale	  = abs( dist / ( 0.5 * win_height ) )
+        obj_c = ( self.xcenter, self.ycenter, self.zcenter )
+        win = GLU.gluProject( obj_c[0], obj_c[1], obj_c[2])
+        obj = GLU.gluUnProject( win[0], win[1] + 0.5 * win_height, win[2])
+        dist = math.sqrt( v3distsq( obj, obj_c ) )
+        scale = abs( dist / ( 0.5 * win_height ) )
 
         glTranslateScene(scale, event.x, event.y, self.xmouse, self.ymouse)
         self.tkRedraw()
@@ -645,7 +652,7 @@ class Opengl(RawOpengl):
         if not self.initialised: return
         self.activate()
 
-        GL.glPushMatrix()			# Protect our matrix
+        GL.glPushMatrix()        # Protect our matrix
         self.update_idletasks()
         self.activate()
         w = self.winfo_width()
@@ -676,8 +683,8 @@ class Opengl(RawOpengl):
     
         # Call objects redraw method.
         self.redraw(self)
-        GL.glFlush()				# Tidy up
-        GL.glPopMatrix()			# Restore the matrix
+        GL.glFlush()      # Tidy up
+        GL.glPopMatrix()  # Restore the matrix
 
         self.tkSwapBuffers()
 
