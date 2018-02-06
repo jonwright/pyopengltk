@@ -265,10 +265,9 @@ if sys.platform.startswith( 'linux' ):
                     vis = GLX.glXGetVisualFromFBConfig(self.__window,  cfgs[i])
                     if ideal == vis.contents.visualid:
                         best = i
-                # print(type(vis.contents.visualid))
-                if best >= 0:
-                    print("Got a matching visual: index %d xid %s"%(best,hex(ideal) ))
-                else:
+                        print("Got a matching visual: index %d %d xid %s"%(
+                            best,vis.contents.visualid,hex(ideal) ))
+                if best < 0:
                     print("oh dear - visual does not match" )
                     # Take the first in the list (should be another I guess)
                     best=0
