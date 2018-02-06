@@ -82,7 +82,7 @@ class baseOpenGLFrame(tk.Frame):
                    bool( msk & GL.GL_CONTEXT_COMPATIBILITY_PROFILE_BIT) )
         except:
             print("Old context errors arose")
-            raise
+            # raise
 
     def tkCreateContext( self ):
         # Platform dependent part
@@ -190,7 +190,7 @@ if sys.platform.startswith( 'linux' ):
         pointer, CFUNCTYPE, c_bool
     from OpenGL import GLX
     from OpenGL.raw._GLX import Display
-    import tk_read_XWindowAttributes
+#    import tk_read_XWindowAttributes
     
     _x11lib = cdll.LoadLibrary(util.find_library( "X11" ) )
     XOpenDisplay = _x11lib.XOpenDisplay
@@ -251,9 +251,10 @@ if sys.platform.startswith( 'linux' ):
                                              (GL.GLint * len(fbatt))(* fbatt),
                                              ncfg )
                 print( "Number of configs",ncfg.value )
-                xwa = tk_read_XWindowAttributes.getXWA(self._wid)
-                print("xwa....id" ,xwa.visual.contents.visualid)
-                ideal = xwa.visual.contents.visualid
+                # xwa = tk_read_XWindowAttributes.getXWA(self._wid)
+                # print("xwa....id" ,xwa.visual.contents.visualid)
+                # ideal = xwa.visual.contents.visualid
+                ideal = self.winfo_visualid()
                 best = -1
                 for i in range(ncfg.value):
                     vis = GLX.glXGetVisualFromFBConfig(self.__window,  cfgs[i])
