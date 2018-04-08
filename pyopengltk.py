@@ -192,7 +192,10 @@ if sys.platform.startswith( 'linux' ):
     from ctypes import c_int, c_char_p, c_void_p, cdll, POINTER, util, \
         pointer, CFUNCTYPE, c_bool
     from OpenGL import GLX
-    from OpenGL.raw._GLX import Display
+    try:
+        from OpenGL.raw._GLX import Display
+    except:
+        from OpenGL.raw.GLX._types import Display
     
     _x11lib = cdll.LoadLibrary(util.find_library( "X11" ) )
     XOpenDisplay = _x11lib.XOpenDisplay
