@@ -112,7 +112,7 @@ def rot(a,b,c):
 class ShaderFrame(pyopengltk.OpenGLFrame):
 
     def initgl(self):
-        GLUT.glutInit(sys.argv)
+#        GLUT.glutInit(sys.argv)
         GL.glClearColor(0.15, 0.15, 0.15, 1.0)
         GL.glEnable(GL.GL_DEPTH_TEST)
         GL.glEnable(GL.GL_PROGRAM_POINT_SIZE)
@@ -141,8 +141,8 @@ class ShaderFrame(pyopengltk.OpenGLFrame):
         if self.nframes > 1:
             t = time.time()-self.start
             fps = "fps: %5.2f frames: %d"%(self.nframes / t, self.nframes)
-            for c in fps:
-                GLUT.glutBitmapCharacter(GLUT.GLUT_BITMAP_HELVETICA_18, ord(c));
+#            for c in fps:
+#                GLUT.glutBitmapCharacter(GLUT.GLUT_BITMAP_HELVETICA_18, ord(c));
         self.nframes += 1
 
 
