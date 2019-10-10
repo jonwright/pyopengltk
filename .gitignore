@@ -1,0 +1,16 @@
+# python
+*.pyc
+__pycache__
+/dist
+/build
+
+# Virtualenv
+/env/
+/venv/
+/.venv/
+/.venv2/
+/.venv3/
+
+# IDEs
+/.idea
+/.vscode
