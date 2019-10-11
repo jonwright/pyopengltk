@@ -1,6 +1,5 @@
-
 from setuptools import setup
-# Try to get it to be pip installable
+
 setup(
     name='pyopengltk',
     version='0.0.1',
@@ -11,7 +10,7 @@ setup(
     description="An opengl frame for pyopengl-tkinter based on ctype",
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
-    py_modules=['pyopengltk'],
+    packages=['pyopengltk'],
     install_requires=[
         'pyopengl',
     ],
