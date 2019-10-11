@@ -4,9 +4,9 @@ from setuptools import setup
 setup(
     name='pyopengltk',
     version='0.0.1',
-    author ='Jon Wright',
-    author_email = 'jonathan.wright@gmail.com',
-    url = 'http://github.com/jonwright/pyopengltk',
+    author='Jon Wright',
+    author_email='jonathan.wright@gmail.com',
+    url='http://github.com/jonwright/pyopengltk',
     license='MIT',
     description="An opengl frame for pyopengl-tkinter based on ctype",
     long_description=open('README.md').read(),
