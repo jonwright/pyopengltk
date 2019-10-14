@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='pyopengltk',
-    version='0.0.1',
+    version='0.0.3',
     author='Jon Wright',
     author_email='jonathan.wright@gmail.com',
     url='http://github.com/jonwright/pyopengltk',
