@@ -17,6 +17,10 @@
 #  http://www.codeproject.com/Articles/1073475/OpenGL-in-Python-with-TKinter
 #
 # Large parts copied from pyopengl/Tk/__init__.py
+
+__author__  = "Jon Wright"
+__version__ = "0.0.3"
+
 import sys
 
 # Platform specific frames
