@@ -30,8 +30,8 @@ if sys.platform.startswith('linux'):
 if sys.platform.startswith('win32'):
     from pyopengltk.win32 import OpenGLFrame
 
-# if sys.platform.startswith('darwin'):
-#     from pyopengltk.darwin import OpenGLFrame
+if sys.platform.startswith('darwin'):
+    from pyopengltk.darwin import OpenGLFrame
 
 # opengl
 from pyopengltk.opengl import RawOpengl
