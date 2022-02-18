@@ -22,12 +22,15 @@ class BaseOpenGLFrame(tk.Frame):
         self.bind('<Expose>', self.tkExpose)
         self.animate = 0
         self.cb = None
+        self.context_created = False
 
     def tkMap(self, evt):
         """" Called when frame goes onto the screen """
         self._wid = self.winfo_id()
-        self.tkCreateContext()
-        self.initgl()
+        if not self.context_created:
+            self.tkCreateContext()
+            self.initgl()
+            self.context_created = True
 
     def printContext(self, extns=False):
         """ For debugging """
