@@ -47,6 +47,9 @@ fbatt = [
 # Inherits the base and fills in the 3 platform dependent functions
 class OpenGLFrame(BaseOpenGLFrame):
 
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+
     def tkCreateContext(self):
         self.__window = XOpenDisplay(self.winfo_screen().encode('utf-8'))
         # Check glx version:

@@ -29,6 +29,9 @@ pfd.iLayerType = PFD_MAIN_PLANE
 # Inherits the base and fills in the 3 platform dependent functions
 class OpenGLFrame(BaseOpenGLFrame):
 
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+
     def tkCreateContext(self):
         self.__window = GetDC(self.winfo_id())
         pixelformat = ChoosePixelFormat(self.__window, pfd)
